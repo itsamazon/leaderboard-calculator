@@ -18,8 +18,9 @@ function App() {
     const [weeklyStrategists, setWeeklyStrategists] = useState<WeeklyStrategists[]>([]);
     const [currentWeek, setCurrentWeek] = useState<string>('');
     const [selectedBreakdown, setSelectedBreakdown] = useState<InternWithScore | null>(null);
-    const [viewMode, setViewMode] = useState<'weekly' | 'cumulative'>('cumulative');
+    const [viewMode, setViewMode] = useState<'weekly' | 'cumulative'>('weekly');
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Load data from backend
@@ -39,7 +40,11 @@ function App() {
 
                 // Set current week to the latest week
                 if (strategistsData.length > 0) {
-                    const weeks = strategistsData.map(ws => ws.week).sort();
+                    const weeks = strategistsData.map(ws => ws.week).sort((a, b) => {
+                        const aNum = parseInt(a.match(/\d+/)?.[0] || '0');
+                        const bNum = parseInt(b.match(/\d+/)?.[0] || '0');
+                        return aNum - bNum;
+                    });
                     setCurrentWeek(weeks[weeks.length - 1]);
                 }
                 setError(null);
@@ -52,16 +57,15 @@ function App() {
         };
 
         loadData();
-
-        // Poll for updates every 10 seconds
-        const interval = setInterval(loadData, 10000);
-
-        return () => clearInterval(interval);
     }, []);
 
     // Derive weeks from weeklyStrategists
     const weeks = useMemo(() => {
-        return weeklyStrategists.map(ws => ws.week).sort();
+        return weeklyStrategists.map(ws => ws.week).sort((a, b) => {
+            const aNum = parseInt(a.match(/\d+/)?.[0] || '0');
+            const bNum = parseInt(b.match(/\d+/)?.[0] || '0');
+            return aNum - bNum;
+        });
     }, [weeklyStrategists]);
 
     // Calculate weekly scores for current week
@@ -169,6 +173,24 @@ function App() {
     // Get top intern from cumulative scores
     const topIntern = cumulativeScores[0] || null;
 
+    const handleRefresh = async () => {
+        try {
+            setRefreshing(true);
+            const [profilesData, strategistsData, metricsData] = await Promise.all([
+                getInternProfiles(),
+                getWeeklyStrategists(),
+                getWeeklyMetrics(),
+            ]);
+            setProfiles(profilesData);
+            setWeeklyStrategists(strategistsData);
+            setWeeklyMetrics(metricsData);
+        } catch (err) {
+            console.error('Error refreshing data:', err);
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
     const handleExportCSV = () => {
         if (viewMode === 'weekly') {
             exportToCSV(weeklyScores, currentWeek);
@@ -204,7 +226,7 @@ function App() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-studio-forest via-studio-forest-light to-studio-sage">
+        <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
                 {/* Header */}
                 <motion.div
@@ -212,10 +234,10 @@ function App() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
                 >
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <div className="bg-studio-forest rounded-2xl p-6 shadow-lg">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 bg-white rounded-xl p-2 flex items-center justify-center">
+                                <div className="w-16 h-16 bg-white rounded-xl p-2 flex items-center justify-center shadow-md">
                                     <img
                                         src="/logo.svg"
                                         alt="Studio X"
@@ -224,22 +246,19 @@ function App() {
                                 </div>
                                 <div>
                                     <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter-2 text-white">
-                                        Studio X Intern Leaderboard
-                                        <span className="ml-3 text-lg bg-blue-600 text-white px-3 py-1 rounded-full">
-                                            👀 Intern View
-                                        </span>
+                                        Studiox Interns Leaderboard
                                     </h1>
-                                    <p className="text-studio-lime mt-1 tracking-tighter-1">
+                                    <p className="text-studio-lime mt-1 tracking-tighter-1 font-medium">
                                         The Spot Where Growth Thrives
                                     </p>
                                 </div>
                             </div>
 
                             {topIntern && (
-                                <div className="bg-studio-lime/20 px-4 py-2 rounded-lg border border-studio-lime/50">
-                                    <p className="text-xs text-studio-lime/80">Overall Leader</p>
-                                    <p className="text-lg font-bold text-studio-lime">{topIntern.profile.name}</p>
-                                    <p className="text-sm text-studio-lime/90">{topIntern.cumulativeTotal.toFixed(1)} pts</p>
+                                <div className="bg-studio-lime px-4 py-2 rounded-lg shadow-md">
+                                    <p className="text-xs text-studio-forest/70 font-medium">Overall Leader</p>
+                                    <p className="text-lg font-bold text-studio-forest">{topIntern.profile.name}</p>
+                                    <p className="text-sm text-studio-forest/80 font-medium">{topIntern.cumulativeTotal.toFixed(1)} pts</p>
                                 </div>
                             )}
                         </div>
@@ -252,12 +271,12 @@ function App() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
                 >
-                    <div className="inline-flex rounded-lg bg-white/10 backdrop-blur-md p-1 border border-white/20">
+                    <div className="inline-flex rounded-lg bg-white p-1 border border-gray-200 shadow-sm">
                         <button
                             onClick={() => setViewMode('weekly')}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'weekly'
-                                ? 'bg-studio-lime text-studio-forest shadow-lg'
-                                : 'text-white/70 hover:text-white'
+                                ? 'bg-studio-lime text-studio-forest shadow-md'
+                                : 'text-gray-600 hover:text-studio-forest hover:bg-gray-50'
                                 }`}
                         >
                             📅 Weekly View
@@ -265,8 +284,8 @@ function App() {
                         <button
                             onClick={() => setViewMode('cumulative')}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'cumulative'
-                                ? 'bg-studio-lime text-studio-forest shadow-lg'
-                                : 'text-white/70 hover:text-white'
+                                ? 'bg-studio-lime text-studio-forest shadow-md'
+                                : 'text-gray-600 hover:text-studio-forest hover:bg-gray-50'
                                 }`}
                         >
                             📊 Cumulative View
@@ -279,24 +298,12 @@ function App() {
                                 <select
                                     value={currentWeek}
                                     onChange={(e) => setCurrentWeek(e.target.value)}
-                                    className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-studio-lime"
+                                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-studio-forest font-medium focus:outline-none focus:ring-2 focus:ring-studio-lime focus:border-studio-lime shadow-sm"
                                 >
                                     {weeks.map(week => (
-                                        <option key={week} value={week} className="bg-studio-forest">{week}</option>
+                                        <option key={week} value={week}>{week}</option>
                                     ))}
                                 </select>
-                                <button
-                                    onClick={handleExportCSV}
-                                    className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors"
-                                >
-                                    📥 CSV
-                                </button>
-                                <button
-                                    onClick={handleExportPDF}
-                                    className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors"
-                                >
-                                    📄 PDF
-                                </button>
                             </>
                         )}
                     </div>
@@ -321,6 +328,39 @@ function App() {
                         intern={selectedBreakdown}
                         onClose={() => setSelectedBreakdown(null)}
                     />
+                )}
+
+                {/* Floating Refresh Button */}
+                <button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    className="fixed bottom-8 right-8 bg-studio-forest text-studio-lime px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:bg-studio-forest/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold border-2 border-studio-lime"
+                    title="Refresh data"
+                >
+                    <svg
+                        className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                    </svg>
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
+
+                {/* Loading Overlay */}
+                {refreshing && (
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40">
+                        <div className="bg-white rounded-xl p-8 shadow-2xl text-center border-2 border-studio-lime">
+                            <div className="w-16 h-16 border-4 border-studio-lime border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-studio-forest text-lg font-bold">Refreshing data...</p>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

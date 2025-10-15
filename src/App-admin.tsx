@@ -49,6 +49,7 @@ function AppAdmin() {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('weekly');
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(false);
 
     // Load initial data
     useEffect(() => {
@@ -244,23 +245,29 @@ function AppAdmin() {
     // Event handlers
     const handleAddIntern = async (newProfile: Omit<InternProfile, 'id' | 'created_at' | 'updated_at'>) => {
         try {
+            setActionLoading(true);
             const created = await createInternProfile(newProfile);
             setProfiles(prev => [...prev, created]);
             toast.success(`✅ ${created.name} added successfully!`);
         } catch (error) {
             console.error('Error adding intern:', error);
             toast.error('❌ Failed to add intern. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleUpdateProfile = async (internId: string, updates: Partial<InternProfile>) => {
         try {
+            setActionLoading(true);
             const updated = await updateInternProfile(internId, updates);
             setProfiles(prev => prev.map(p => p.id === internId ? updated : p));
             toast.success('✅ Profile updated successfully!');
         } catch (error) {
             console.error('Error updating profile:', error);
             toast.error('❌ Failed to update profile. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -269,6 +276,7 @@ function AppAdmin() {
         if (!intern) return;
 
         try {
+            setActionLoading(true);
             await deleteInternProfile(internId);
             setProfiles(prev => prev.filter(p => p.id !== internId));
             setWeeklyMetrics(prev => prev.filter(m => m.internId !== internId));
@@ -276,6 +284,8 @@ function AppAdmin() {
         } catch (error) {
             console.error('Error deleting intern:', error);
             toast.error('❌ Failed to delete intern. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -286,17 +296,21 @@ function AppAdmin() {
         const intern = profiles.find(p => p.id === metric.internId);
 
         try {
+            setActionLoading(true);
             await deleteWeeklyMetrics(metricId);
             setWeeklyMetrics(prev => prev.filter(m => m.id !== metricId));
             toast.success(`🗑️ ${intern?.name}'s ${metric.week} metrics deleted!`);
         } catch (error) {
             console.error('Error deleting metric:', error);
             toast.error('❌ Failed to delete metric. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleSelectStrategists = async (strategistIds: string[]) => {
         try {
+            setActionLoading(true);
             const created = await createWeeklyStrategists({
                 week: pendingNewWeekName,
                 strategistIds: strategistIds
@@ -309,22 +323,28 @@ function AppAdmin() {
         } catch (error) {
             console.error('Error creating week:', error);
             toast.error('❌ Failed to create week. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleEditWeekStrategists = async (week: string, strategistIds: string[]) => {
         try {
+            setActionLoading(true);
             const updated = await updateWeeklyStrategists(week, strategistIds);
             setWeeklyStrategists(prev => prev.map(ws => ws.week === week ? updated : ws));
             toast.success(`✅ ${week} strategists updated!`);
         } catch (error) {
             console.error('Error updating strategists:', error);
             toast.error('❌ Failed to update strategists. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleDeleteWeek = async (week: string) => {
         try {
+            setActionLoading(true);
             await deleteWeeklyStrategists(week);
             setWeeklyStrategists(prev => prev.filter(ws => ws.week !== week));
             setWeeklyMetrics(prev => prev.filter(m => m.week !== week));
@@ -332,12 +352,15 @@ function AppAdmin() {
         } catch (error) {
             console.error('Error deleting week:', error);
             toast.error('❌ Failed to delete week. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleUpdateMetrics = async (metrics: Omit<WeeklyMetrics, 'internId'>, internId: string) => {
         const intern = profiles.find(p => p.id === internId);
         try {
+            setActionLoading(true);
             if (editingMetric && editingMetric.id) {
                 const updated = await updateWeeklyMetrics(editingMetric.id, { ...metrics, internId: internId });
                 setWeeklyMetrics(prev => prev.map(m => m.id === editingMetric.id ? updated : m));
@@ -352,6 +375,8 @@ function AppAdmin() {
         } catch (error) {
             console.error('Error updating metrics:', error);
             toast.error('❌ Failed to update metrics. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -728,6 +753,16 @@ function AppAdmin() {
                 strategistAverageGrowth={strategistAverageGrowth}
                 existingMetric={editingMetric}
             />
+
+            {/* Global Loading Overlay */}
+            {actionLoading && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl p-8 shadow-2xl text-center">
+                        <div className="w-16 h-16 border-4 border-studio-lime border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-studio-forest text-lg font-medium">Processing...</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

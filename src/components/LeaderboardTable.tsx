@@ -68,7 +68,14 @@ export default function LeaderboardTable({ interns, onDelete, onEdit, viewOnly =
 
     return (
         <>
-            <div className="overflow-x-auto">
+            {viewOnly && (
+                <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-900 font-medium">
+                        💡 <span className="font-bold">Tip:</span> Click on any row to view detailed breakdown and weekly feedback from your mentor!
+                    </p>
+                </div>
+            )}
+            <div className="overflow-x-auto bg-white rounded-xl shadow-md">
                 <table className="w-full">
                     <thead>
                         <tr className="bg-studio-forest text-white">

@@ -59,7 +59,7 @@ export default function CumulativeLeaderboard({ interns, onDelete, viewOnly = fa
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto bg-white rounded-xl shadow-md">
             <table className="w-full">
                 <thead>
                     <tr className="bg-studio-forest text-white">
@@ -98,8 +98,8 @@ export default function CumulativeLeaderboard({ interns, onDelete, viewOnly = fa
                                         >
                                             <span className="text-xs font-medium text-gray-600">{ws.week}:</span>
                                             <span className={`text-xs font-bold px-2 py-1 rounded ${ws.role === 'Strategist'
-                                                    ? 'bg-studio-lime/20 text-studio-forest'
-                                                    : 'bg-studio-forest/20 text-studio-forest'
+                                                ? 'bg-studio-lime/20 text-studio-forest'
+                                                : 'bg-studio-forest/20 text-studio-forest'
                                                 }`}>
                                                 {ws.score}
                                             </span>
