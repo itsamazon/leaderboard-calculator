@@ -55,6 +55,7 @@ export interface ScoreBreakdown {
         followersScore: number;
         viewsScore: number;
         interactionsScore: number;
+        basedOnStrategistAverage?: number;
     };
 }
 

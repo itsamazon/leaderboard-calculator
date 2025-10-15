@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { InternProfile, WeeklyMetrics, InternWithScore, InternCumulativeScore, WeeklyStrategists } from './types';
 import { calculateScore } from './utils/scoring';
-import { exportToCSV, exportToPDF } from './utils/export';
 import {
     getInternProfiles,
     getWeeklyStrategists,
@@ -188,18 +187,6 @@ function App() {
             console.error('Error refreshing data:', err);
         } finally {
             setRefreshing(false);
-        }
-    };
-
-    const handleExportCSV = () => {
-        if (viewMode === 'weekly') {
-            exportToCSV(weeklyScores, currentWeek);
-        }
-    };
-
-    const handleExportPDF = () => {
-        if (viewMode === 'weekly') {
-            exportToPDF(weeklyScores, currentWeek);
         }
     };
 
