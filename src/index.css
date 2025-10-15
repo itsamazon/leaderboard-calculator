@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    line-height: 1.66;
+    font-weight: 400;
+
+    color-scheme: light;
+    color: #1E1E1E;
+    background-color: #ffffff;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+@layer utilities {
+    .glow-lime {
+        box-shadow: 0 0 20px rgba(201, 233, 96, 0.5);
+    }
+
+    .glow-forest {
+        box-shadow: 0 0 15px rgba(21, 63, 42, 0.3);
+    }
+}
