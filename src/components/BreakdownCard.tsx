@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { InternWithScore } from '../types';
+import { calculateStrategistGrowth } from '../utils/scoring';
 
 interface BreakdownCardProps {
     intern: InternWithScore;
@@ -9,6 +10,11 @@ interface BreakdownCardProps {
 export default function BreakdownCard({ intern, onClose }: BreakdownCardProps) {
     const { profile, weeklyMetrics, score } = intern;
     const isStrategist = weeklyMetrics.role === 'Strategist';
+    
+    // Calculate what the support's growth would be if calculated from their own metrics
+    const supportGrowthBreakdown = !isStrategist && weeklyMetrics.socialMetrics
+        ? calculateStrategistGrowth(weeklyMetrics.socialMetrics)
+        : null;
 
     return (
         <>
@@ -45,9 +51,9 @@ export default function BreakdownCard({ intern, onClose }: BreakdownCardProps) {
                 <div className="p-6 space-y-4 overflow-y-auto flex-1">
                     <div className="text-center pb-4 border-b border-gray-200">
                         <p className="text-sm text-gray-600 mb-1">Total Score</p>
-                        <p className="text-4xl font-bold text-studio-forest">{score.total}</p>
+                        <p className="text-4xl font-bold text-studio-forest">{score.total.toFixed(1)}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                            out of {isStrategist ? '100' : '70'} + bonus
+                            {isStrategist ? '100' : '70'} base + {score.bonus > 0 ? `${score.bonus} bonus` : '0 bonus'} = {score.total.toFixed(1)} total
                         </p>
                     </div>
 
@@ -111,7 +117,22 @@ export default function BreakdownCard({ intern, onClose }: BreakdownCardProps) {
                             {score.growthDetails && (
                                 <div className="text-xs text-gray-600 space-y-1 ml-2">
                                     {score.growthDetails.basedOnStrategistAverage !== undefined ? (
-                                        <p className="italic">Based on strategist average: {score.growthDetails.basedOnStrategistAverage.toFixed(1)} pts ÷ 2</p>
+                                        <>
+                                            <p className="italic font-semibold mb-2 text-studio-forest">
+                                                Your score: {score.growthDetails.basedOnStrategistAverage.toFixed(1)} pts (strategist average) ÷ 2 = {score.growth.toFixed(1)} pts
+                                            </p>
+                                            {supportGrowthBreakdown && (
+                                                <div className="mt-2 pt-2 border-t border-gray-300">
+                                                    <p className="font-semibold text-studio-charcoal mb-1">Your Actual Metrics Breakdown:</p>
+                                                    <p>• Followers Growth: {supportGrowthBreakdown.details.followersScore.toFixed(1)} pts (IG + Twitter)</p>
+                                                    <p>• Views/Impressions: {supportGrowthBreakdown.details.viewsScore.toFixed(1)} pts (IG + Twitter)</p>
+                                                    <p>• Interactions/Engagements: {supportGrowthBreakdown.details.interactionsScore.toFixed(1)} pts (IG + Twitter)</p>
+                                                    <p className="text-xs italic mt-1 text-gray-500">
+                                                        Total if calculated from your metrics: {supportGrowthBreakdown.total.toFixed(1)} pts
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </>
                                     ) : (
                                         <>
                                             <p>• Followers Growth: {(score.growthDetails.followersScore || 0).toFixed(1)} pts (IG + Twitter)</p>
@@ -167,18 +188,18 @@ export default function BreakdownCard({ intern, onClose }: BreakdownCardProps) {
                             </div>
                         )}
 
-                        {/* Bonus */}
-                        {score.bonus > 0 && (
-                            <div className="bg-studio-lime/10 p-3 rounded-lg border border-studio-lime">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-studio-charcoal">Bonus Points</span>
-                                    <span className="text-sm font-bold text-studio-forest">+{score.bonus}</span>
-                                </div>
-                                <p className="text-xs text-gray-600 mt-1">
-                                    Studio X brand contributions
-                                </p>
+                        {/* Bonus - Always show, even if 0 */}
+                        <div className={`p-3 rounded-lg border ${score.bonus > 0 ? 'bg-studio-lime/10 border-studio-lime' : 'bg-gray-50 border-gray-200'}`}>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium text-studio-charcoal">Bonus Points</span>
+                                <span className={`text-sm font-bold ${score.bonus > 0 ? 'text-studio-forest' : 'text-gray-400'}`}>
+                                    {score.bonus > 0 ? `+${score.bonus}` : '0'}
+                                </span>
                             </div>
-                        )}
+                            <p className="text-xs text-gray-600 mt-1">
+                                Studio X brand contributions ({weeklyMetrics.bonusFollowers || 0} followers)
+                            </p>
+                        </div>
                     </div>
 
                     {/* Weekly Comments - Prominent Section */}

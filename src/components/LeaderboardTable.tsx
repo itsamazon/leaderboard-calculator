@@ -186,9 +186,16 @@ export default function LeaderboardTable({ interns, onDelete, onEdit, viewOnly =
                                     </span>
                                 </td>
                                 <td className="px-4 py-4">
-                                    <span className="text-lg font-bold text-studio-forest">
-                                        {intern.score.total}
-                                    </span>
+                                    <div className="flex flex-col">
+                                        <span className="text-lg font-bold text-studio-forest">
+                                            {intern.score.total.toFixed(1)}
+                                        </span>
+                                        {intern.score.bonus > 0 && (
+                                            <span className="text-xs text-gray-500">
+                                                (includes +{intern.score.bonus} bonus)
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 {!viewOnly && (
                                     <td className="px-4 py-4">
