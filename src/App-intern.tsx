@@ -50,13 +50,13 @@ function App() {
             } catch (err) {
                 console.error('Error loading data:', err);
                 let errorMessage = err instanceof Error ? err.message : 'Failed to load data. Please check the console for details.';
-                
+
                 // Check for CORS errors specifically
                 if (errorMessage.includes('CORS') || errorMessage.includes('Failed to fetch') || errorMessage.includes('Network Error')) {
                     errorMessage = 'CORS Error: Backend is not allowing requests from localhost:3000. Please update ALLOWED_ORIGINS in Vercel to include http://localhost:3000 and redeploy the backend. See UPDATE-VERCEL-CORS.md for instructions.';
                     console.error('🚨 CORS Error Detected!', errorMessage);
                 }
-                
+
                 setError(errorMessage);
                 console.error('Full error details:', err);
             } finally {

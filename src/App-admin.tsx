@@ -74,13 +74,13 @@ function AppAdmin() {
             } catch (error) {
                 console.error('Error loading data:', error);
                 let errorMessage = error instanceof Error ? error.message : 'Failed to load data. Please check the console for details.';
-                
+
                 // Check for CORS errors specifically
                 if (errorMessage.includes('CORS') || errorMessage.includes('Failed to fetch') || errorMessage.includes('Network Error')) {
                     errorMessage = 'CORS Error: Backend is not allowing requests from localhost:3000. Please update ALLOWED_ORIGINS in Vercel to include http://localhost:3000 and redeploy the backend. See UPDATE-VERCEL-CORS.md for instructions.';
                     console.error('🚨 CORS Error Detected!', errorMessage);
                 }
-                
+
                 toast.error(`❌ ${errorMessage}`, { duration: 10000 });
             } finally {
                 setLoading(false);
