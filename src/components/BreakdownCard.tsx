@@ -53,7 +53,12 @@ export default function BreakdownCard({ intern, onClose }: BreakdownCardProps) {
                         <p className="text-sm text-gray-600 mb-1">Total Score</p>
                         <p className="text-4xl font-bold text-studio-forest">{score.total.toFixed(1)}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                            {isStrategist ? '100' : '70'} base + {score.bonus > 0 ? `${score.bonus} bonus` : '0 bonus'} = {score.total.toFixed(1)} total
+                            {(() => {
+                                const baseTotal = isStrategist
+                                    ? (score.growth || 0) + (score.creativity || 0) + (score.proactivity || 0) + (score.leadership || 0)
+                                    : (score.growth || 0) + (score.creativity || 0) + (score.proactivity || 0) + (score.collaboration || 0);
+                                return `${baseTotal.toFixed(1)} base + ${score.bonus || 0} bonus = ${score.total.toFixed(1)} total`;
+                            })()}
                         </p>
                     </div>
 
@@ -197,8 +202,18 @@ export default function BreakdownCard({ intern, onClose }: BreakdownCardProps) {
                                 </span>
                             </div>
                             <p className="text-xs text-gray-600 mt-1">
-                                Studio X brand contributions ({weeklyMetrics.bonusFollowers || 0} followers)
+                                Studio X brand contributions: {weeklyMetrics.bonusFollowers || 0} followers
+                                {weeklyMetrics.bonusFollowers && weeklyMetrics.bonusFollowers > 0 && (
+                                    <span className="ml-1">
+                                        ({Math.floor((weeklyMetrics.bonusFollowers || 0) / 10)} × 10 = {Math.floor((weeklyMetrics.bonusFollowers || 0) / 10) * 10}, {Math.floor((weeklyMetrics.bonusFollowers || 0) / 10)} × 5 = {score.bonus} pts)
+                                    </span>
+                                )}
                             </p>
+                            {weeklyMetrics.bonusFollowers && weeklyMetrics.bonusFollowers > 0 && score.bonus === 0 && (
+                                <p className="text-xs text-yellow-600 mt-1 font-semibold">
+                                    ⚠️ {weeklyMetrics.bonusFollowers} followers = 0 bonus points. Need at least 10 followers for 5 bonus points.
+                                </p>
+                            )}
                         </div>
                     </div>
 

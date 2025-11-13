@@ -70,8 +70,17 @@ export function calculateSupportGrowth(strategistAverageGrowth: number): { total
 /**
  * Calculate bonus points: +5 points per 10 followers contributed to Studio X brands
  */
-export function calculateBonus(bonusFollowers: number): number {
-    return Math.floor(bonusFollowers / 10) * 5;
+export function calculateBonus(bonusFollowers: number | undefined | null): number {
+    // Ensure bonusFollowers is a valid number (default to 0 if undefined/null/NaN)
+    const followers = typeof bonusFollowers === 'number' && !isNaN(bonusFollowers) ? bonusFollowers : 0;
+    const bonus = Math.floor(followers / 10) * 5;
+    
+    // Debug logging in development
+    if (typeof window !== 'undefined' && import.meta.env?.DEV && followers > 0) {
+        console.log(`💰 Bonus Calculation: ${followers} followers = ${bonus} bonus points (${Math.floor(followers / 10)} × 10 = ${Math.floor(followers / 10) * 10} followers, ${Math.floor(followers / 10)} × 5 = ${bonus} points)`);
+    }
+    
+    return bonus;
 }
 
 /**
@@ -81,7 +90,7 @@ export function calculateScore(
     role: Role,
     socialMetrics: SocialMetrics,
     manualScores: ManualScores,
-    bonusFollowers: number,
+    bonusFollowers: number | undefined | null,
     basedOnStrategistGrowth?: number
 ): ScoreBreakdown {
     if (role === 'Strategist') {
